@@ -1,6 +1,6 @@
 # Wireworks
 
-Because who doesn't want wire all over the place.
+Attach things to other things with wire for fun, profit, and decoupled python applications.
 
 ## Whassat?
 

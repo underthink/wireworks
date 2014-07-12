@@ -1,17 +1,9 @@
 from wireworks.util.synchronous_executor import SynchronousExecutor
-from wireworks.static_utilities import set_current_event, clear_current_event
+from wireworks.event import Event
 
 __author__ = 'rob'
 
 _DEFAULT_SYNCHRONOUS_EXECUTOR = SynchronousExecutor()
-
-
-class Event(object):
-    def __init__(self):
-        self._futures = []
-
-    def add_future(self, future):
-        self._futures.append(future)
 
 
 class Dispatcher(object):
@@ -21,17 +13,8 @@ class Dispatcher(object):
         self._dispatcher_glob_dict = glob_dict
 
     def call(self, *args, **kwargs):
-        event = Event()
-
-        for one_callable in self._all_matching_callables():
-            def shim():
-                set_current_event(event)
-                try:
-                    return one_callable(*args, **kwargs)
-                finally:
-                    clear_current_event()
-
-            event.add_future(self._executor.submit(shim))
+        event = Event(self._all_matching_callables(), self._executor)
+        event.go(*args, **kwargs)
 
         return event
 

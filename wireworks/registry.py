@@ -1,18 +1,13 @@
 from __future__ import print_function
-from threading import RLock
 
 from wireworks.dispatcher import Dispatcher
-from wireworks.util.callable_proxies import StrongCallableReference, WeakCallableReferences
+from wireworks.util.callable_references import StrongCallableReference, WeakCallableReference
 from wireworks.util.globbable_dict import GlobbableDict
-
-from weakref import ref
-from functools import partial
 
 __author__ = 'rob'
 
 import inspect
 import logging
-from sys import getrefcount
 
 
 class Registry(Dispatcher):
@@ -61,7 +56,7 @@ class Registry(Dispatcher):
         if strongly_reference:
             p_callable_ref = StrongCallableReference(fn)
         else:
-            p_callable_ref = WeakCallableReferences(fn, lambda del_proxy: self._unregister_proxy(pattern, del_proxy))
+            p_callable_ref = WeakCallableReference(fn, lambda del_proxy: self._unregister_proxy(pattern, del_proxy))
 
         Registry._LOG.debug("Adding callable %s for pattern %s" % (p_callable_ref, pattern))
         self._glob_dict[pattern].add(p_callable_ref)
