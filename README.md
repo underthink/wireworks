@@ -77,4 +77,4 @@ Points to note:
 
 ## Who's to blame?
 
-Rob Newman <rob at wireworks.endless.email>
+Me! I'm rob at wireworks.endless.email.
