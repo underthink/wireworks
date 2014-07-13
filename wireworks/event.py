@@ -1,8 +1,10 @@
 __author__ = 'rob'
 
-from wireworks.static_utilities import set_current_event, clear_current_event
+import time
 
 from concurrent.futures import wait as futures_wait, FIRST_COMPLETED, ALL_COMPLETED
+
+from wireworks.util.static_functions import set_current_event, clear_current_event
 
 
 class Event(object):
@@ -52,7 +54,9 @@ class Event(object):
             future.add_done_callback(self._handle_complete)
             self._futures.append(future)
 
-    def try_cancel_pending_calls(self, future):
+        return self
+
+    def try_cancel_pending_calls(self):
         """Attempt to cancel all pending calls, where possible.
 
         Attempts to cancel calls by indicating that no further executor submissions should happen (which may be
@@ -86,8 +90,12 @@ class Event(object):
         :return:        The value returned by the first future to finish, or None if no futures completed successfully
         """
         possible = self._futures
-        while possible:
-            (done, possible) = futures_wait(self._futures, timeout=timeout, return_when=FIRST_COMPLETED)
+        remaining = timeout
+        started = time.time()
+
+        while possible and remaining >= 0:
+            (done, possible) = futures_wait(self._futures, timeout=remaining, return_when=FIRST_COMPLETED)
+            remaining = timeout - (time.time() - started)
             for future in done:
                 if not future.cancelled():
                     return future.result(0)
@@ -97,8 +105,10 @@ class Event(object):
     def await_all(self, timeout=None):
         """Await all known futures completion.
 
-        All completed futures are then returned. Unlike `first_result`, this method doesn't try to return
-        the result or throw any exceptions.
+        All futures that have been completed after the timeout expires are returned.. Unlike `first_result`, this
+        method doesn't try to return the result or throw any exceptions.
+
+        As ever, cancelled Futures are not returned.
 
         :param timeout: Amount of time to wait in seconds before giving up and returning what we got until then
         :return:        All futures that have completed and were not cancelled
@@ -107,4 +117,5 @@ class Event(object):
         return [future for future in done if not future.cancelled()]
 
     def _handle_complete(self, future):
+        """Internal callback to handle completing futures"""
         self._completed_futures.append(future)
